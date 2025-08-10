@@ -1,5 +1,7 @@
 package com.kyy.springbootsecuritydemo.common.error;
 
+import com.kyy.springbootsecuritydemo.common.interceptor.TraceInterceptor;
+import com.kyy.springbootsecuritydemo.common.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -84,13 +86,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAny(Exception ex, HttpServletRequest req) {
+    public ResponseEntity<ApiResponse<Void>> handleAny(Exception ex, HttpServletRequest req) {
         String orig = originalUri(req);
         Integer sc = (Integer) req.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         String msg = (String) req.getAttribute(RequestDispatcher.ERROR_MESSAGE);
         log.error("Unhandled error at {} (status={}, msg={})", orig, sc, msg, ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "알 수 없는 오류가 발생했습니다.", req);
+        return wrap(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "알 수 없는 오류가 발생했습니다.", req);
     }
+
+
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiError> handleAny(Exception ex, HttpServletRequest req) {
+//        String orig = originalUri(req);
+//        Integer sc = (Integer) req.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+//        String msg = (String) req.getAttribute(RequestDispatcher.ERROR_MESSAGE);
+//        log.error("Unhandled error at {} (status={}, msg={})", orig, sc, msg, ex);
+//        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "알 수 없는 오류가 발생했습니다.", req);
+//    }
 
     // 405 - 메서드 미지원
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -127,5 +139,19 @@ public class GlobalExceptionHandler {
         api.path    = req.getRequestURI();
         // api.traceId = MDC.get("traceId"); // 관제 연동 시
         return api;
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBad(IllegalArgumentException ex, HttpServletRequest req) {
+        log.warn("BAD: {}", ex.getMessage());
+        return wrap(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
+    }
+
+    private ResponseEntity<ApiResponse<Void>> wrap(HttpStatus status, String code, String msg, HttpServletRequest req) {
+        String path = req.getServletPath();
+        String traceId = (String) req.getAttribute(TraceInterceptor.ATTR_TRACE_ID);
+        Long duration = TraceInterceptor.durationMs(req);
+        var body = ApiResponse.<Void>error(code, msg, path, traceId, duration);
+        return ResponseEntity.status(status).body(body);
     }
 }
