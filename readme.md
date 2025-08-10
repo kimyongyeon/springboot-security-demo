@@ -1,136 +1,69 @@
-# Spring Security + JPA + H2 + JWT 보일러플레이트
+# Spring Boot Security JWT 데모
 
-**목표:** 바로 실행 가능한 최소 구성으로 시작해, `JPA + H2` 기반 사용자 관리, `JWT` 기반 인증(Stateless), 글로벌 예외 처리(JSON), 선택적 `AuthorityFilter`(헤더→권한 보강)까지 한 번에 갖춘 스타터 템플릿.
+JWT 인증, JPA 사용자 관리, 역할 기반 권한 부여를 포함한 현대적인 보안 패턴을 시연하는 포괄적인 Spring Boot 애플리케이션입니다.
 
----
+## 🚀 주요 기능
 
-## 핵심 요약
+- **JWT 인증**: JSON Web Token을 활용한 상태 비저장 인증
+- **역할 기반 권한 부여**: 사용자 및 관리자 역할 관리
+- **JPA 통합**: Spring Data JPA와 H2 인메모리 데이터베이스
+- **전역 예외 처리**: JSON 응답을 포함한 중앙 집중식 오류 처리
+- **보안 필터**: 커스텀 JWT 인증 및 권한 필터
+- **H2 콘솔**: 개발용 데이터베이스 콘솔 접근
+- **포괄적인 보안**: 401/403 JSON 핸들러, CORS 지원
 
-* **스택**: Spring Boot 3.3.x, Java 17, Spring Security 6, Spring Data JPA, H2(mem)
-* **인증**: `/auth/login`에서 **JWT 발급**, 이후 `Authorization: Bearer <token>`로 접근
-* **인가**: `ROLE_USER`, `ROLE_ADMIN` 기반. 엔드포인트별 접근 제어 적용
-* **예외**: 전역 `@RestControllerAdvice` + `401/403` JSON 핸들러
-* **권한 보강(옵션)**: `AuthorityFilter`로 `X-Auth-Roles` 헤더 → 권한 합산/검증
-* **개발 편의**: H2 콘솔 `/h2-console`, 시드 사용자 `user/password`, `admin/password`
+## 🛠 기술 스택
 
----
+- **Spring Boot** 3.5.4
+- **Java** 17
+- **Spring Security** 6
+- **Spring Data JPA**
+- **H2 Database** (인메모리)
+- **JWT** (JJWT 0.11.5)
+- **Lombok**
+- **Gradle**
 
-## 프로젝트 구조
-
-```
-└── src
-    ├── main
-    │ ├── java
-    │ │ └── com
-    │ │     └── kyy
-    │ │         └── springbootsecuritydemo
-    │ │             ├── SpringbootSecurityDemoApplication.java
-    │ │             ├── config
-    │ │             │ └── BootstrapData.java
-    │ │             ├── domain
-    │ │             │ ├── entity
-    │ │             │ │ └── UserAccount.java
-    │ │             │ └── vo
-    │ │             │     └── UserVo.java
-    │ │             ├── error
-    │ │             │ ├── ApiError.java
-    │ │             │ ├── GlobalExceptionHandler.java
-    │ │             │ └── entrypoint
-    │ │             │     ├── RestAccessDeniedHandler.java
-    │ │             │     └── RestAuthEntryPoint.java
-    │ │             ├── repository
-    │ │             │ └── UserAccountRepository.java
-    │ │             └── security
-    │ │                 ├── SecurityConfig.java
-    │ │                 ├── controller
-    │ │                 │ ├── AuthController.java
-    │ │                 │ ├── ErrorDemoController.java
-    │ │                 │ └── HelloController.java
-    │ │                 ├── filter
-    │ │                 │ ├── AuthorityFilter.java
-    │ │                 │ └── JwtAuthenticationFilter.java
-    │ │                 ├── jwt
-    │ │                 │ └── JwtTokenProvider.java
-    │ │                 └── service
-    │ │                     └── JpaUserDetailsService.java
-    │ └── resources
-    │     ├── application.yaml
-    │     ├── static
-    │     └── templates
-    └── test
-        └── java
-            └── com
-                └── kyy
-                    └── springbootsecuritydemo
-                        └── SpringbootSecurityDemoApplicationTests.java
+## 📁 프로젝트 구조
 
 ```
-
----
-
-## 의존성
-
-`pom.xml` 핵심(발췌):
-
-```xml
-<properties>
-  <java.version>17</java.version>
-  <spring-boot.version>3.3.2</spring-boot.version>
-</properties>
-
-<dependencies>
-  <!-- Spring Boot 기본 -->
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-  </dependency>
-
-  <!-- DB -->
-  <dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <scope>runtime</scope>
-  </dependency>
-
-  <!-- JWT -->
-  <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-api</artifactId>
-    <version>0.11.5</version>
-  </dependency>
-  <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-impl</artifactId>
-    <version>0.11.5</version>
-    <scope>runtime</scope>
-  </dependency>
-  <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-jackson</artifactId>
-    <version>0.11.5</version>
-    <scope>runtime</scope>
-  </dependency>
-
-  <!-- Test -->
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-test</artifactId>
-    <scope>test</scope>
-  </dependency>
-</dependencies>
+src/main/java/com/kyy/springbootsecuritydemo/
+├── SpringbootSecurityDemoApplication.java    # 메인 애플리케이션
+├── common/
+│   ├── config/
+│   │   └── BootstrapData.java                 # 초기 데이터 시딩
+│   ├── entrypoint/
+│   │   ├── PublicEndpoints.java               # 공개 API 엔드포인트
+│   │   ├── RestAccessDeniedHandler.java       # 403 핸들러
+│   │   └── RestAuthEntryPoint.java            # 401 핸들러
+│   ├── error/
+│   │   ├── ApiError.java                      # 오류 응답 모델
+│   │   └── GlobalExceptionHandler.java       # 전역 예외 핸들러
+│   └── security/
+│       ├── SecurityConfig.java                # 보안 설정
+│       ├── controller/
+│       │   ├── AuthController.java            # 인증 엔드포인트
+│       │   ├── ErrorDemoController.java       # 오류 시연용
+│       │   └── HelloController.java           # 보호된 엔드포인트
+│       ├── domain/
+│       │   ├── entity/UserAccount.java        # 사용자 엔티티
+│       │   └── vo/UserVo.java                 # 사용자 값 객체
+│       ├── filter/
+│       │   ├── AuthorityFilter.java           # 권한 강화 필터
+│       │   └── JwtAuthenticationFilter.java   # JWT 인증 필터
+│       ├── jwt/
+│       │   └── JwtTokenProvider.java          # JWT 토큰 관리
+│       ├── repository/
+│       │   └── UserAccountRepository.java     # 사용자 리포지토리
+│       └── service/
+│           └── JpaUserDetailsService.java     # 사용자 세부정보 서비스
+└── work/
+    └── controller/
+        └── HiController.java                  # 추가 데모 컨트롤러
 ```
 
----
+## 🔧 설정
 
-## 설정 (`application.yml`)
+### 애플리케이션 설정 (`application.yaml`)
 
 ```yaml
 spring:
@@ -150,89 +83,103 @@ spring:
       enabled: true
       path: /h2-console
 
-logging:
-  level:
-    org.hibernate.SQL: debug
-
 app:
   jwt:
-    # 최소 256비트(Base64) 권장. 운영에서 안전한 값으로 교체
     secret: "bXktdmVyeS1sb25nLXN1cGVyLXNlY3JldC1iYXNlNjQtMzJieXRlc2F0bGVhc3Q="
     expiration-minutes: 60
     issuer: "demo-auth"
-
-# 404를 GlobalExceptionHandler로 보내고 싶다면 추가
-# spring:
-#   mvc:
-#     throw-exception-if-no-handler-found: true
-#   web:
-#     resources:
-#       add-mappings: false
 ```
 
----
+### 의존성 (`build.gradle`)
 
-## 도메인 & 인증
+```gradle
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+```
 
-### UserAccount (JPA)
+## 🚀 빠른 시작
 
-* `username`(unique), `password`(BCrypt), `roles`(`ROLE_` 접두 문자열)
-* 권한은 `@ElementCollection<String>`로 간단 저장
+### 1. 애플리케이션 실행
 
-### JpaUserDetailsService
+```bash
+./gradlew bootRun
+```
 
-* DB 사용자 → `UserDetails` 변환
-* `roles` → `SimpleGrantedAuthority` 매핑
+### 2. 접근점
 
-### JWT 구성
+- **애플리케이션**: http://localhost:8080
+- **H2 콘솔**: http://localhost:8080/h2-console
+  - JDBC URL: `jdbc:h2:mem:testdb`
+  - 사용자명: `sa`
+  - 비밀번호: (비어있음)
 
-* **발급**: `JwtTokenProvider.generate(UserDetails)`
-* **파싱**: `JwtTokenProvider.parse(token)`
-* **필터**: `JwtAuthenticationFilter`가 `Authorization: Bearer ...` 검사 → `SecurityContext` 채움
+### 3. 기본 사용자
 
-### SecurityConfig (Stateless)
+애플리케이션 시작 시 기본 사용자가 생성됩니다:
 
-* `SessionCreationPolicy.STATELESS`
-* 기본 권한 정책:
+- **사용자**: `user` / `password` (ROLE_USER)
+- **관리자**: `admin` / `password` (ROLE_ADMIN)
 
-    * `permitAll`: `/auth/login`, `/api/public/**`, `/h2-console/**`
-    * `ROLE_USER|ADMIN`: `/api/user/**`
-    * `ROLE_ADMIN`: `/api/admin/**`
-* `formLogin`/`httpBasic`는 **API 서버 기준 비활성 권장**
-* 401/403을 JSON 고정: `RestAuthEntryPoint`, `RestAccessDeniedHandler`
+## 🔐 인증 및 권한 부여
 
----
+### 로그인 및 JWT 토큰 발급
 
-## (옵션) AuthorityFilter
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"password"}'
+```
 
-**헤더 기반 권한 보강/검증**이 필요할 때 사용.
+**응답:**
+```json
+{
+  "tokenType": "Bearer",
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "username": "user",
+  "roles": ["ROLE_USER"]
+}
+```
 
-* 헤더: `X-Auth-Roles: USER,ADMIN`
-* 옵션:
+### 보호된 엔드포인트에서 JWT 토큰 사용
 
-    * `allowList`: 허용 가능한 권한 화이트리스트
-    * `requireOnPaths`: 경로 패턴별 필수 권한(부족 시 403)
-* 체인 연결:
+```bash
+# 토큰 설정
+TOKEN="your_jwt_token_here"
 
-    * **인증 이후 보강**: `addFilterAfter(authorityFilter(), UsernamePasswordAuthenticationFilter.class)`
+# 사용자 엔드포인트 접근 (ROLE_USER 또는 ROLE_ADMIN 필요)
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/user/ping
 
-> 운영에서는 **게이트웨이에서만 세팅되는 신뢰 헤더**로 한정(서명/HMAC 또는 mTLS 권장). 클라이언트 직접 지정 금지.
+# 관리자 엔드포인트 접근 (ROLE_ADMIN만 허용)
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/admin/ping
+```
 
----
+## 🛡️ 보안 기능
 
-## 글로벌 예외 처리
+### 엔드포인트 보호
 
-* `@RestControllerAdvice`로 공통 포맷(`ApiError`) 제공
-* 대표 핸들링:
+- **공개**: `/auth/login`, `/api/public/**`, `/h2-console/**`
+- **사용자 보호**: `/api/user/**` (ROLE_USER 또는 ROLE_ADMIN)
+- **관리자 전용**: `/api/admin/**` (ROLE_ADMIN만)
 
-    * `400`: 바인딩/유효성 오류(필드 상세 포함)
-    * `401`: 인증 실패(EntryPoint)
-    * `403`: 접근 거부(AccessDeniedHandler)
-    * `404`: 미매핑(옵션 설정 필요)
-    * `409`: 무결성 위반
-    * `500`: 미처리 예외
+### 오류 처리
 
-예시(403):
+애플리케이션은 일관된 JSON 오류 응답을 제공합니다:
 
 ```json
 {
@@ -240,112 +187,117 @@ app:
   "status": 403,
   "error": "Forbidden",
   "code": "ACCESS_DENIED",
-  "message": "접근 권한이 없습니다.",
+  "message": "접근이 거부되었습니다",
   "path": "/api/admin/ping"
 }
 ```
 
----
+### 권한 필터 (선택사항)
 
-## 빠른 시작
+`AuthorityFilter`는 헤더를 기반으로 사용자 권한을 강화할 수 있습니다:
+- 헤더: `X-Auth-Roles: USER,ADMIN`
+- 게이트웨이 레벨에서 권한을 주입하는 마이크로서비스 아키텍처에 유용
 
-```bash
-# 실행
-mvn spring-boot:run
-```
+## 🧪 테스트
 
-* **H2 콘솔**: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-
-    * JDBC URL: `jdbc:h2:mem:testdb`
-* **시드 사용자**(BootstrapData):
-
-    * `user / password` → `ROLE_USER`
-    * `admin / password` → `ROLE_ADMIN`
-
----
-
-## 로그인 & 호출 예시
-
-### 1) 로그인 → 토큰 발급
+### 테스트 실행
 
 ```bash
-curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user","password":"password"}'
+./gradlew test
 ```
 
-응답 예:
+### 엔드포인트 테스트
 
-```json
-{
-  "tokenType":"Bearer",
-  "accessToken":"<JWT>",
-  "username":"user",
-  "roles":["ROLE_USER"]
+```bash
+# 공개 엔드포인트
+curl http://localhost:8080/api/public/hello
+
+# 오류 시연
+curl http://localhost:8080/error/demo/400
+curl http://localhost:8080/error/demo/500
+```
+
+## 📊 데이터베이스 스키마
+
+### UserAccount 엔티티
+
+```sql
+CREATE TABLE user_account (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE user_account_roles (
+    user_account_id BIGINT,
+    roles VARCHAR(255)
+);
+```
+
+## 🔧 개발 팁
+
+### JWT 시크릿 설정
+
+운영 환경에서는 안전한 256비트 Base64 인코딩된 시크릿을 사용하세요:
+```bash
+# 안전한 시크릿 생성
+openssl rand -base64 32
+```
+
+### CORS 설정
+
+프론트엔드 통합을 위해 `SecurityConfig`에서 CORS를 설정하세요:
+```java
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    configuration.setAllowedHeaders(Arrays.asList("*"));
+    configuration.setAllowCredentials(true);
+    
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
 }
 ```
 
-### 2) 토큰으로 보호 API 접근
+## 🚨 보안 고려사항
 
-```bash
-ACCESS_TOKEN="<JWT>"
+- **JWT 시크릿**: 운영 환경에서는 환경 변수 사용
+- **토큰 만료**: 운영 환경에서는 더 짧은 만료 시간 고려
+- **리프레시 토큰**: 보안 향상을 위한 리프레시 토큰 메커니즘 구현
+- **HTTPS 전용**: 운영 환경에서는 항상 HTTPS 사용
+- **입력 검증**: 모든 사용자 입력에 대한 검증
+- **속도 제한**: 인증 엔드포인트에 대한 속도 제한 구현
 
-# USER 권한
-curl -H "Authorization: Bearer $ACCESS_TOKEN" \
-  http://localhost:8080/api/user/ping
+## 🔮 향후 계획
 
-# ADMIN 권한 필요
-curl -H "Authorization: Bearer $ACCESS_TOKEN" \
-  http://localhost:8080/api/admin/ping
-```
+- [ ] 리프레시 토큰 메커니즘 구현
+- [ ] 비밀번호 재설정 기능 추가
+- [ ] 로그인 실패 후 계정 잠금 구현
+- [ ] API 버전 관리 추가
+- [ ] 감사 로깅 구현
+- [ ] 통합 테스트 추가
+- [ ] Docker 지원 추가
+- [ ] OAuth2 통합 구현
 
-### 3) 어드민 토큰이 필요할 때
+## 🐛 문제 해결
 
-```bash
-# admin/password로 로그인하여 발급
-curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"password"}'
-```
+### 일반적인 문제들
 
----
+**401 Unauthorized (인증되지 않음)**
+- Authorization 헤더에 JWT 토큰이 포함되어 있는지 확인
+- 토큰이 만료되지 않았는지 확인
+- 토큰 형식이 올바른지 확인: `Bearer <token>`
 
-## 설계 포인트 & 운영 팁
+**403 Forbidden (접근 금지)**
+- 사용자가 해당 엔드포인트에 필요한 역할을 가지고 있는지 확인
+- SecurityConfig 경로 매핑 확인
+- 역할이 `ROLE_` 접두사를 가지고 있는지 확인
 
-* **ROLE\_ 접두**: `hasRole("ADMIN")`는 내부적으로 `ROLE_ADMIN` 비교. 저장/클레임 모두 같은 규칙 유지.
-* **비밀키 관리**: `app.jwt.secret`는 **최소 256bit Base64**. Vault/Parameter Store 사용 권장.
-* **만료 전략**: Access 짧게(예: 15\~60분), **Refresh 토큰**은 별도 저장 & 회전(화이트/블랙리스트).
-* **CORS**: SPA 호출이면 `CorsConfigurationSource`를 등록해 오리진/헤더/메서드/노출헤더를 명시.
-* **H2/CSRF**: 데모용으로 CSRF 비활성. 폼 기반/쿠키 세션을 쓴다면 CSRF 전략 재활성 필요.
-* **권한 캐시**: 대규모 환경에서 권한 변경 반영이 중요하면 토큰 짧게 + 서버측 권한 캐시/버전 클레임 고려.
-* **로그/추적**: `ApiError.traceId`에 MDC(`X-Request-Id`) 연동하면 문제 추적이 쉬워짐.
-
----
-
-## 다음 단계(옵션 확장)
-
-* **Refresh 토큰 + 회전**: `/auth/refresh` 엔드포인트, 토큰 블랙리스트/화이트리스트
-* **키 로테이션(JWK/RSA)**: `kid` 기반 공개키 노출, 키 교체 자동화
-* **멀티 테넌트**: `tenantId`/`scopes` 클레임, 테넌트 경계별 인가 정책
-* **권한 관리 고도화**: Role/Permission 테이블로 정규화, `@PreAuthorize` 스펙 도입
-* **API 전용/웹 분리**: `/api/**`는 JSON 핸들러, 웹은 폼 로그인 리다이렉트로 분기
-
----
-
-## 트러블슈팅 체크리스트
-
-* 401이 뜨면:
-
-    * `Authorization: Bearer <token>` 헤더 확인
-    * 토큰 만료/서명 불일치 확인
-* 403이 뜨면:
-
-    * 토큰에 필요한 `ROLE_*` 포함 여부 확인
-    * `SecurityConfig`의 경로 매핑/`AuthorityFilter` requireOnPaths 확인
-* H2 콘솔 프레임 에러:
-
-    * `headers().frameOptions().sameOrigin()` 설정 여부 확인
-
----
-
-필요하면 **리프레시 토큰 + 키 로테이션**까지 포함한 운영형 구성으로 바로 확장해줄게.
+**H2 콘솔 접근 문제**
+- `/h2-console/**`이 허용된 경로에 있는지 확인
+- 프레임 옵션 설정 확인
+- application.yaml에서 H2 콘솔이 활성화되어 있는지 확인
