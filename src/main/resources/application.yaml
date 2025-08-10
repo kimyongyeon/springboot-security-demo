@@ -1,10 +1,10 @@
 # src/main/resources/application.yml
 spring:
   mvc:
-    throw-exception-if-no-handler-found: true
+    problem-details:
+      enabled: true  # ProblemDetail 활성화
     web:
       resources:
-        add-mappings: false
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -32,3 +32,8 @@ app:
     secret: "bXktdmVyeS1sb25nLXN1cGVyLXNlY3JldC1iYXNlNjQtMzJieXRlc2F0bGVhc3Q="
     expiration-minutes: 60
     issuer: "demo-auth"
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
